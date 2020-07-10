@@ -1,0 +1,1 @@
+aws s3 sync .\Pre6-26 s3://emea-db/Zeus --profile emea
