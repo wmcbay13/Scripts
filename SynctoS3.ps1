@@ -14,10 +14,9 @@ $sw =  [system.diagnostics.stopwatch]::StartNew()
 $sw.reset();$sw.Start()
 Write-Log "Starting Sync" $Log
 try  {
-    Get-Date
     Start-Process aws -argument "s3 sync Z:\zeus s3://emea-data-import/Zeus"  -Wait 
-    Get-Date
-} catch {
+} 
+catch {
     $Error | ForEach-Object{Write-Log $_ $Log}
 }
 Write-Log "$($sw.Elapsed)" $Log
