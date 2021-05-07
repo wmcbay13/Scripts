@@ -1,0 +1,6 @@
+# finds out how many shards are open
+GET /_stats
+#finds a list of indices
+GET /_cat/indices?v&s=status:asc
+#saw a bunch of old indices open so i closed them
+POST /*2020.10*/_close

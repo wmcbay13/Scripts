@@ -1,0 +1,1 @@
+Get-ADUser -SearchBase -filter * -properties PasswordExpired, PasswordLastSet, PasswordNeverExpires | Format-Table Name, PasswordExpired, PasswordLastSet, PasswordNeverExpires Export-csv -path c:\temp\ADuser-passwords-expires.csv -Append -Encoding UTF8

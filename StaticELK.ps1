@@ -1,9 +1,9 @@
 #Configure ELK logs
 $elkserver = $ELKServer
 $Region = $ELKRegion
-$service = "tenant"
+$service = "static"
 $environment = $ELKEnvironment
-$LogFolder = $ELKTenantLogs
+$LogFolder = $ELKStaticLogs
 $InstallFolder = $ELKInstallPath
 
 Write-Output "Server: $ElkServer"
@@ -36,8 +36,6 @@ Function UpdateYML {
         if($_ -match '    - ' -and $Paths){$Paths = $false;$Skip = $true;$NewYML += "    - $Logs\*.txt"  }
         if($_ -match 'setup.template'){$SetupTemplate = $true}
         if($_ -match 'fields:' -and $SetupTemplate){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: $Service";}
-        #if($_ -match 'fields:' -and $SetupTemplate){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: api";}
-        #if($_ -match 'fields:' -and $SetupTemplate){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: tenant";}
         if($_ -match '  ' -and $Fields){$Skip = $true}
         if($_ -match '#' -and $Fields){$Skip = $false;$Fields = $false}
         if($_ -match 'setup.kibana:'){$NewYML += "#setup.kibana:";$Skip = $true}
@@ -68,8 +66,6 @@ ForEach ($BeatFolder in (gci $InstallFolder -directory | ?{$_ -match 'beat'})){
     switch($filename){
         'filebeat' {
             $FileYML = UpdateYML $file $elkserver $Region $service $environment $LogFolder
-            #$FileYML = UpdateYML $file $elkserver $Region api $environment C:\AppLogs\FodWebAPI
-            #$FileYML = UpdateYML $file $elkserver $Region tenant $environment C:\AppLogs\ZeusTenant
             $FileYML | %{ 
                 $NewYML += $_ 
             }

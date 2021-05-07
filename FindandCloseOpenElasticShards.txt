@@ -1,0 +1,9 @@
+#Find totals, shards open, and closes by date in ElasticSearch.
+
+
+GET _cluster/health?pretty
+GET _cat/shards | wc -l
+
+ 
+
+POST /*2020.0.7*/_close

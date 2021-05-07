@@ -1,0 +1,20 @@
+authconfig --disablecache \
+--enablelocauthorize \
+--enablewinbind \
+--enablewinbindusedefaultdomain \
+--enablewinbindauth \
+--smbsecurity=ads \
+--enablekrb5 \
+--enablekrb5kdcdns \
+--enablekrb5realmdns \
+--enablemkhomedir \
+--enablepamaccess \
+--updateall \
+--smbidmapuid=100000-1000000 \
+--smbidmapgid=100000-1000000 \
+--disablewinbindoffline \
+--winbindtemplateshell=/bin/bash \
+--winbindjoin=wmcbay-da \
+--smbworkgroup=hpfod.net \
+--smbrealm=hpfod.net \
+--krb5realm=hpfod.net

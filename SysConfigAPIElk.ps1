@@ -1,10 +1,11 @@
 #Configure ELK logs
 $elkserver = $ELKServer
 $Region = $ELKRegion
-$service = "tenant"
+$service = "api"
 $environment = $ELKEnvironment
-$LogFolder = $ELKTenantLogs
+$LogFolder = $ELKAPILogs
 $InstallFolder = $ELKInstallPath
+# $Packages = ($ELKBeatPackages).Split(',')
 
 Write-Output "Server: $ElkServer"
 Write-Output "Product: $ELKProduct"
@@ -12,6 +13,7 @@ Write-Output "service: $service"
 Write-Output "LogFolder: $LogFolder"
 Write-Output "environment: $environment"
 Write-Output "InstallFolder: $InstallFolder"
+$global:IsTenant = $false
 
 Function UpdateYML {
     param($File, $ELK, $Region, $Service, $Env, $Logs)
@@ -26,18 +28,32 @@ Function UpdateYML {
     $ElasticSearch = $false
     $LogStash = $false
     $CertFolder = "C:/ELK/certs"
+    $LogsUpdated = $false
     Get-Content $File | %{
         $Skip = $false
         if($_ -match 'setup.ilm'){$SetupILM = $true}
         if($_ -match 'inputs:' -and $SetupILM -eq $false){$NewYML += "setup.ilm.enabled: false";$inputs=$true}
         if($_ -match 'enabled:' -and $inputs ){$NewYML += "  enabled: true";$Skip = $true;$inputs = $false}
         if($_ -match 'metricbeat.config.modules:' -and $SetupILM -eq $false){$NewYML += "setup.ilm.enabled: false";$SetupILM= $true}
+        if($_ -match 'exclude_lines' -and $Paths){$Paths = $false }
         if($_ -match 'paths:'){$Paths = $true}
-        if($_ -match '    - ' -and $Paths){$Paths = $false;$Skip = $true;$NewYML += "    - $Logs\*.txt"  }
+        if($_ -match '    - ' -and $Paths){
+            if($_ -match 'Tenant'){
+                $global:IsTenant  = $true
+                $NewYML += $_ 
+                $NewYML += "    - $Logs\*.txt" 
+                $LogsUpdated = $true
+                $Skip = $true;
+            }elseif($_ -match $Logs -and  $LogsUpdated){
+                $Skip = $true;
+            }else{
+                $Skip = $true;$NewYML += "    - $Logs\*.txt" 
+                $LogsUpdated = $true
+            }
+        }
+        if($_ -match '$Logs' -and $IsTenant){$Skip = $true}
         if($_ -match 'setup.template'){$SetupTemplate = $true}
-        if($_ -match 'fields:' -and $SetupTemplate){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: $Service";}
-        #if($_ -match 'fields:' -and $SetupTemplate){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: api";}
-        #if($_ -match 'fields:' -and $SetupTemplate){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: tenant";}
+        if($_ -match 'fields:' -and $SetupTemplate  -and (-Not $global:IsTenant )){$Skip = $true;$Fields = $true;$NewYML += "fields:";$NewYML += "  env: $Env";$NewYML += "  region: $Region";$NewYML += "  service: $Service";}
         if($_ -match '  ' -and $Fields){$Skip = $true}
         if($_ -match '#' -and $Fields){$Skip = $false;$Fields = $false}
         if($_ -match 'setup.kibana:'){$NewYML += "#setup.kibana:";$Skip = $true}
@@ -46,8 +62,8 @@ Function UpdateYML {
         if($_ -match 'output.logstash'){$LogStash = $true; $NewYML += "output.logstash:";$Skip = $true}
         if($_ -match 'hosts' -and $LogStash){$LogStash = $false;$NewYML += '  hosts: ["' + "$($ELK):443" + '"' + "]";$Skip = $true}
         if($_ -match 'ssl.certificate_authorities'){$NewYML += '  ssl.certificate_authorities: ["' + "$($CertFolder)/fortifyopsca.pem" + '"' + "]";$Skip = $true}
-        if($_ -match 'ssl.certificate:'){$NewYML += '  ssl.certificate: "' + "$($CertFolder)/filebeat.pem" + '"' ;$Skip = $true}
-        if($_ -match 'ssl.key'){$NewYML += '  ssl.key: "' + "$($CertFolder)/filebeat.key" + '"' ;$Skip = $true}
+        if($_ -match 'ssl.certificate:'){$NewYML += '  ssl.certificate: "' + "$($CertFolder)/filebeat.pem" + '"';$Skip = $true}
+        if($_ -match 'ssl.key'){$NewYML += '  ssl.key: "' + "$($CertFolder)/filebeat.key" + '"';$Skip = $true}
         if(-Not $Skip){
             $NewYML += $_ 
         }
@@ -59,7 +75,7 @@ ForEach ($BeatFolder in (gci $InstallFolder -directory | ?{$_ -match 'beat'})){
     Write-Output "Current Folder: $($BeatFolder.FullName)"
     $filename = $BeatFolder.Name.split('-')[0]
     Write-Output "Filename: $filename"
-    #if($filename -notin $Packages){echo "$filename is not Included in deployment, update ELKBeatPackages to include";continue}
+    # if($filename -notin $Packages){echo "$filename is not Included in deployment, update ELKBeatPackages to include";continue}
     $file = Join-Path $BeatFolder.FullName "$($filename).yml"
     Write-Output "File: $file"
     $NewYML = @()
@@ -67,13 +83,6 @@ ForEach ($BeatFolder in (gci $InstallFolder -directory | ?{$_ -match 'beat'})){
     $LogStashM =  $false
     switch($filename){
         'filebeat' {
-            $FileYML = UpdateYML $file $elkserver $Region $service $environment $LogFolder
-            #$FileYML = UpdateYML $file $elkserver $Region api $environment C:\AppLogs\FodWebAPI
-            #$FileYML = UpdateYML $file $elkserver $Region tenant $environment C:\AppLogs\ZeusTenant
-            $FileYML | %{ 
-                $NewYML += $_ 
-            }
-            break
         }
         'metricbeat' {
             $FileYML = UpdateYML $file $elkserver $Region $service $environment $LogFolder
@@ -103,8 +112,3 @@ ForEach ($BeatFolder in (gci $InstallFolder -directory | ?{$_ -match 'beat'})){
     $NewYML | set-content $file
     
 }
-
-
-
-
-

@@ -1,0 +1,55 @@
+JYTHON INSTALL:
+To install Jython JAR file from command line (jython-installer-2.7.2.jar):
+
+	java -jar jython-installer-2.7.2.jar
+
+
+JRUBY INSTALL (jruby_windows_x64_9_2_11_1.exe - Requires Java 64-bit, which is installed on base image):
+
+	Run .exe to install app
+	Update PATH to replace old version to new version:  
+		OLD:  C:\jruby-9.2.7.0\bin
+		NEW:  C:\jruby-9.2.11.1\bin
+	Can Uninstall old version, but not required
+
+
+NEWMAN INSTALL:
+To install Newman from command line:
+
+	npm install -g newman
+
+
+PYTHON 3.7.7 INSTALL (python-3.7.7-amd64.exe):
+
+	1. Uninstall existing Python 2.7.16
+	2. Install Python 3.7.7 (Do NOT use 3.8 - SSLyze won't work with it)
+	3. Python install wizard has two checkboxes that should be checked:
+		* Install launcher for All Users
+		* Add Python 3.7 to PATH
+	4. On completion, the following entries should be added to PATH:
+		*  C:\Program Files\Python37\
+		*  C:\Program Files\Python37\Scripts\
+
+
+SSLyze INSTALL (Install after Python is updated, as this uses PIP to install and needs Python 3.7.x.  SSLyze will NOT work with the latest Python 3.8):
+
+	1. Command line - Install nassl:
+		* pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org nassl
+
+	2. Update pip: 
+		* python -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org --upgrade pip
+	3. Install SSLyze:
+		* pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host pypi.python.org  sslyze
+
+
+SQLMAP 'INSTALL' (file replacement instead of actual install):
+	To 'install' SQLmap, there is not a formal installer, as it is a python script, but has a lot of folders/files.
+	To update, just delete the folders/files from the path below:
+
+		C:\Manual & QA Test Tools\sqlmap\
+
+	Then, unzip the SQLmap file and replace all the deleted folders/files with those inside the zipped folder: 'sqlmapproject-sqlmap-d0be782'
+	This will keep the .py and other files in the same place and the shortcut should still work fine, launching the command line as Admin.
+
+	WARNING: Apparently our AV software sees SQLmap as malware, so this might be a consideration, though should still copy to the system.  Chrome did reject it when I dowloaded the .zip, but IE was able to grab it fine. 
+	
